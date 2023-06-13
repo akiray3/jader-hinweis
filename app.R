@@ -1,6 +1,6 @@
-library("needs")
-needs("shiny", "shinydashboard", "ggplot2", "tidyverse", "DT", "ggrepel",
-  "openxlsx", "plotly", "pipeR")
+# library("needs")
+# needs("shiny", "shinydashboard", "ggplot2", "tidyverse", "DT", "ggrepel",
+#   "openxlsx", "plotly", "pipeR")
 
 shiny::shinyApp(
   ui = dashboardPage(
@@ -55,12 +55,10 @@ shiny::shinyApp(
       )
     )
   ),
-  server = function(input, output) {  
-    tbl200 <- readRDS("tbl_200.obj")
-    figlist <- readRDS("fig_list.obj")
-    tblall <- readRDS("tbl_all.obj")
-    # tbl200 <- reactive({readRDS("tbl_200.obj")})
-    # tblall <- reactive({readRDS("tbl_all.obj")})
+  server = function(input, output) {
+    tbl200 <- reactive({readRDS("tbl_200.obj")})
+    tblall <- reactive({readRDS("tbl_all.obj")})
+    figlist <- reactive({readRDS("fig_list.obj")})
     output$dt_top200 <- renderDT({
       DT::datatable(
         data = tbl200,
