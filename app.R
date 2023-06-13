@@ -47,9 +47,9 @@ shiny::shinyApp(
     )
   ),
   server = function(input, output) {
-    tbl200 <- readRDS("tbl_200.obj")
-    tbl_dtl <- readRDS("tbl_all.obj")
-    figlist <- readRDS("fig_list.obj")
+    tbl200 <- reactive({readRDS("tbl_200.obj")})
+    tbl_dtl <- reactive({readRDS("tbl_all.obj")})
+    figlist <- reactive({readRDS("fig_list.obj")})
     output$dt_top200 <- renderDT({
       DT::datatable(
         data = tbl200, filter = "top", rownames = FALSE, selection = "single",
