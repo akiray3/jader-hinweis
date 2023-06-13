@@ -75,10 +75,11 @@ shiny::shinyApp(
           size = 4, family = "HiraKakuProN-W6", show.legend = FALSE
         )
       output$plt_map <- renderPlot({plot(outfig)})
+      tbl_sub <- tbl_dtl %>%
+            dplyr::filter(有害事象 == as.character(tmpdata$有害事象[1]))
       output$dt_detail <- renderDT({
         DT::datatable(
-          data = tbl_dtl %>%
-            dplyr::filter(有害事象 == as.character(tmpdata$有害事象[1])),
+          data = tbl_sub,
           filter = "top", rownames = FALSE,
           selection = "single", extensions = "Buttons",
           option = list(
