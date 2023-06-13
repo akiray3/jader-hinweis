@@ -1,11 +1,11 @@
 name: jader-hinweis
 title:
 username:
-account: yeqzvu-akira-yoshida
+account: akiray3
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 9298686
-bundleId: 7338747
+bundleId: 7338815
 url: https://akiray3.shinyapps.io/jader-hinweis/
-when: 1686653894.06073
-lastSyncTime: 1686653894.06073
+when: 1686655187.0673
+lastSyncTime: 1686655187.06731

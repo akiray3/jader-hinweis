@@ -1,9 +1,11 @@
-# library("needs")
-# needs("shiny", "shinydashboard", "ggplot2", "tidyverse", "DT", "ggrepel",
-#   "openxlsx", "plotly", "pipeR")
+library("shiny")
+library("shinydashboard")
+library("tidyverse")
+library("ggrepel")
+library("DT")
 
 shiny::shinyApp(
-  ui = dashboardPage(
+  ui = shinydashboard::dashboardPage(
     skin = "black",
     dashboardHeader(title = 'Jader Hinweis'),
     dashboardSidebar(
@@ -13,37 +15,26 @@ shiny::shinyApp(
         menuItem(text = "Help", tabName = "help", icon = icon("house"))
       )
     ),
-    dashboardBody(
+    shinydashboard::dashboardBody(
       tabItems(
         tabItem(
           tabName = "page1",
           tags$link(rel = "stylesheet", type = "text/css", href = "style.css"),
           fluidRow(
             shinydashboard::box(
-              width = 12,
-              solidHeader = TRUE,
-              status = "primary",
-              title = "1. リストから有害事象を選ぶ",
-              DTOutput("dt_top200"),
-              # div(class = "space"),
-              uiOutput("cldownload01"),
-              uiOutput("cldbt01"),
-              collapsible	= TRUE
+              width = 12, solidHeader = TRUE, collapsible	= TRUE,
+              status = "primary", title = "1. リストから有害事象を選ぶ",
+              DTOutput("dt_top200")
             ),
             shinydashboard::box(
-              width = 12,
-              solidHeader = TRUE,
-              status = "primary",
-              title = "2. 有害事象マップの確認",
-              collapsible	= TRUE,
+              width = 12, solidHeader = TRUE, collapsible	= TRUE,
+              status = "primary", title = "2. 有害事象マップの確認",
               plotOutput("plt_map")
             ),
             shinydashboard::box(
-              width = 12,
-              solidHeader = TRUE,
-              status = "primary",
-              title = "3. 有害事象の詳細データを抽出",
-              collapsible	= TRUE
+              width = 12, solidHeader = TRUE, collapsible	= TRUE,
+              status = "primary", title = "3. 有害事象の詳細データを抽出",
+              DTOutput("dt_detail")
             )
           )
         ),
@@ -56,18 +47,14 @@ shiny::shinyApp(
     )
   ),
   server = function(input, output) {
-    tbl200 <- reactive({readRDS("tbl_200.obj")})
-    tblall <- reactive({readRDS("tbl_all.obj")})
-    figlist <- reactive({readRDS("fig_list.obj")})
+    tbl200 <- readRDS("tbl_200.obj")
+    tbl_dtl <- readRDS("tbl_all.obj")
+    figlist <- readRDS("fig_list.obj")
     output$dt_top200 <- renderDT({
       DT::datatable(
-        data = tbl200,
-        filter = "top",
-        rownames = FALSE,
-        selection = "single",
+        data = tbl200, filter = "top", rownames = FALSE, selection = "single",
         option = list(
-          responsive = TRUE,
-          autoWidth = TRUE,
+          scrollX = TRUE, responsive = TRUE, autoWidth = TRUE,
           columnDefs = list(
             list(
               visible = FALSE,
@@ -75,21 +62,29 @@ shiny::shinyApp(
             )
           )
         )
-      ) %>%
-      DT::formatStyle(columns = colnames(.), fontSize = "25%")
+      )
     })
     observeEvent(input$dt_top200_rows_selected, {
       thisrow <- input$dt_top200_rows_selected
-      tmp <- tbl200 %>%
+      tmpdata <- tbl200 %>%
         dplyr::slice(thisrow)
-      outfig <- figlist[[tmp$性別[1]]] +
-        geom_point(data = tmp, color = "#e15f41", shape = 19, alpha = 0.8) +
+      outfig <- figlist[[tmpdata$性別[1]]] +
+        geom_point(data = tmpdata, color = "#e15f41", shape = 19, alpha = 0.8) +
         ggrepel::geom_label_repel(
-          data = tmp, mapping = aes(label = 有害事象), color = "#e15f41",
+          data = tmpdata, mapping = aes(label = 有害事象), color = "#e15f41",
           size = 4, family = "HiraKakuProN-W6", show.legend = FALSE
         )
-      output$plt_map = renderPlot({
-        plot(outfig)
+      output$plt_map <- renderPlot({plot(outfig)})
+      output$dt_detail <- renderDT({
+        DT::datatable(
+          data = tbl_dtl %>%
+            dplyr::filter(有害事象 == as.character(tmpdata$有害事象[1])),
+          filter = "top", rownames = FALSE, selection = "single", extensions = "Buttons",
+          option = list(
+            scrollX = TRUE, responsive = TRUE, autoWidth = TRUE,
+            dom = "Blfrtip", buttons = c("csv", "excel")
+          )
+        )
       })
     })
   }
