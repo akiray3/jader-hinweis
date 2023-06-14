@@ -3,6 +3,7 @@ library("shinydashboard")
 library("tidyverse")
 library("ggrepel")
 library("DT")
+library("fst")
 
 shiny::shinyApp(
   ui = shinydashboard::dashboardPage(
@@ -40,15 +41,20 @@ shiny::shinyApp(
         ),
         tabItem(
           tabName = "help",
-          tags$link(rel = "stylesheet", type = "text/css", href = "pagestyle.css"),
+          tags$link(
+            rel = "stylesheet",
+            type = "text/css",
+            href = "pagestyle.css"
+          ),
           htmlTemplate("page.html")
         )
       )
     )
   ),
   server = function(input, output) {
-    tbl200 <- readRDS("tbl_200.obj")
-    tbl_dtl <- readRDS("tbl_all.obj")
+    tbl200 <- fst::read.fst(path = "tbl_200.obj") %>%
+       dplyr::arrange(性別, 件数)
+    tbl_dtl <- fst::read.fst(path = "tbl_all.obj")
     figlist <- readRDS("fig_list.obj")
     output$dt_top200 <- renderDT({
       DT::datatable(
