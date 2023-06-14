@@ -8,7 +8,7 @@ library("fst")
 shiny::shinyApp(
   ui = shinydashboard::dashboardPage(
     skin = "black",
-    dashboardHeader(title = 'Jader Hinweis'),
+    dashboardHeader(title = 'Jader HiYnweis'),
     dashboardSidebar(
       collapsed = TRUE,
       sidebarMenu(
@@ -51,7 +51,7 @@ shiny::shinyApp(
       )
     )
   ),
-  server = function(input, output) {
+  server = function(input, output, session) {
     tbl200 <- fst::read.fst(path = "tbl_200.obj") %>%
        dplyr::arrange(性別, 件数)
     tbl_dtl <- fst::read.fst(path = "tbl_all.obj")
@@ -83,7 +83,7 @@ shiny::shinyApp(
       output$plt_map <- renderPlot({plot(outfig)})
       tbl_sub <- tbl_dtl %>%
             dplyr::filter(有害事象 == as.character(tmpdata$有害事象[1]))
-      output$dt_detail <- renderDT({
+      output$dt_detail <- renderDT(server = FALSE,{
         DT::datatable(
           data = tbl_sub,
           filter = "top", rownames = FALSE,
