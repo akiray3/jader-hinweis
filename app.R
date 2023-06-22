@@ -12,7 +12,8 @@ shiny::shinyApp(
     dashboardSidebar(
       collapsed = TRUE,
       sidebarMenu(
-        menuItem(text = "Page1", tabName = "page1", icon = icon("chart-line")),
+        menuItem(text = "有害事象マップ", tabName = "page1", icon = icon("chart-line")),
+        menuItem(text = "全データ", tabName = "page2", icon = icon("chart-line")),
         menuItem(text = "Help", tabName = "help", icon = icon("house"))
       )
     ),
@@ -36,6 +37,17 @@ shiny::shinyApp(
               width = 12, solidHeader = TRUE, collapsible	= TRUE,
               status = "primary", title = "3. 有害事象の詳細データを抽出",
               DTOutput("dt_detail")
+            )
+          )
+        ),
+        tabItem(
+          tabName = "page2",
+          tags$link(rel = "stylesheet", type = "text/css", href = "style.css"),
+          fluidRow(
+            shinydashboard::box(
+              width = 12, solidHeader = TRUE, collapsible	= TRUE,
+              status = "primary", title = "1. JADERデータ全体から抽出する",
+              DTOutput("dt_all")
             )
           )
         ),
@@ -67,6 +79,17 @@ shiny::shinyApp(
               targets = c(1, 5:12, 14, 15, 17:18)
             )
           )
+        )
+      )
+    })
+    output$dt_all <- renderDT({
+      DT::datatable(
+        data = tbl_dtl,
+        filter = "top", rownames = FALSE,
+        selection = "single", extensions = "Buttons",
+        option = list(
+          scrollX = TRUE, responsive = TRUE, autoWidth = TRUE,
+          dom = "Blfrtip", buttons = c("csv", "excel")
         )
       )
     })
