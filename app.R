@@ -8,7 +8,7 @@ library("fst")
 shiny::shinyApp(
   ui = shinydashboard::dashboardPage(
     skin = "black",
-    dashboardHeader(title = 'Jader HiYnweis'),
+    dashboardHeader(title = 'Jader Hinweis'),
     dashboardSidebar(
       collapsed = TRUE,
       sidebarMenu(
