@@ -72,48 +72,20 @@ shiny::shinyApp(
                   )
                 ),
                 fluidRow(
-                  column(3,
-                         h4("男性：クロス表"),
-                         tableOutput("crossTableMale")
-                  ),
-                  column(3,
-                         h4("女性：クロス表"),
-                         tableOutput("crossTableFemale")
-                  ),
-                  column(3,
-                         h4("全体：クロス表"),
-                         tableOutput("crossTableAll")
-                  )
-                ),
+                  column(3,h4("男性：クロス表"),tableOutput("crossTableMale")),
+                  column(3,h4("女性：クロス表"),tableOutput("crossTableFemale")),
+                  column(3,h4("全体：クロス表"),tableOutput("crossTableAll"))),
                 fluidRow(
-                  column(3,
-                         h4("男性：オッズ比"),
-                         verbatimTextOutput("oddsRatioMale")
-                  ),
-                  column(3,
-                         h4("女性：オッズ比"),
-                         verbatimTextOutput("oddsRatioFemale")
-                  ),
-                  column(3,
-                         h4("全体：オッズ比"),
-                         verbatimTextOutput("oddsRatioAll")
-                  )
-                ),
+                  column(3,h4("男性：オッズ比"),verbatimTextOutput("oddsRatioMale")),
+                  column(3,h4("女性：オッズ比"),verbatimTextOutput("oddsRatioFemale")),
+                  column(3,h4("全体：オッズ比"),verbatimTextOutput("oddsRatioAll"))),
                 fluidRow(
-                  column(3,
-                         h4("男性：95%信頼区間"),
-                         verbatimTextOutput("confidenceIntervalMale")
-                  ),
-                  column(3,
-                         h4("女性：95%信頼区間"),
-                         verbatimTextOutput("confidenceIntervalFemale")
-                  ),
-                  column(3,
-                         h4("全体：95%信頼区間"),
-                         verbatimTextOutput("confidenceIntervalAll")
-                  )
+                  column(3,h4("男性：95%信頼区間"),verbatimTextOutput("confidenceIntervalMale")),
+                  column(3,h4("女性：95%信頼区間"),verbatimTextOutput("confidenceIntervalFemale")),
+                  column(3,h4("全体：95%信頼区間"),verbatimTextOutput("confidenceIntervalAll"))
                 )
               )
+              
             )
           )
         ),
