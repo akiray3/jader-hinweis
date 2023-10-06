@@ -67,22 +67,22 @@ shiny::shinyApp(
               mainPanel(
                 fluidRow(
                   # 他の要素と同様に、選択された薬剤名と有害事象を表示するための要素を追加
-                  column(6,
+                  column(8,
                          verbatimTextOutput("selectedDE")
                   )
                 ),
                 fluidRow(
-                  column(3,h4("男性：クロス表"),tableOutput("crossTableMale")),
-                  column(3,h4("女性：クロス表"),tableOutput("crossTableFemale")),
-                  column(3,h4("全体：クロス表"),tableOutput("crossTableAll"))),
+                  column(4,h4("男性：クロス表"),tableOutput("crossTableMale")),
+                  column(4,h4("女性：クロス表"),tableOutput("crossTableFemale")),
+                  column(4,h4("全体：クロス表"),tableOutput("crossTableAll"))),
                 fluidRow(
-                  column(3,h4("男性：オッズ比"),verbatimTextOutput("oddsRatioMale")),
-                  column(3,h4("女性：オッズ比"),verbatimTextOutput("oddsRatioFemale")),
-                  column(3,h4("全体：オッズ比"),verbatimTextOutput("oddsRatioAll"))),
+                  column(4,h4("男性：オッズ比"),verbatimTextOutput("oddsRatioMale")),
+                  column(4,h4("女性：オッズ比"),verbatimTextOutput("oddsRatioFemale")),
+                  column(4,h4("全体：オッズ比"),verbatimTextOutput("oddsRatioAll"))),
                 fluidRow(
-                  column(3,h4("男性：95%信頼区間"),verbatimTextOutput("confidenceIntervalMale")),
-                  column(3,h4("女性：95%信頼区間"),verbatimTextOutput("confidenceIntervalFemale")),
-                  column(3,h4("全体：95%信頼区間"),verbatimTextOutput("confidenceIntervalAll"))
+                  column(4,h4("男性：95%信頼区間"),verbatimTextOutput("confidenceIntervalMale")),
+                  column(4,h4("女性：95%信頼区間"),verbatimTextOutput("confidenceIntervalFemale")),
+                  column(4,h4("全体：95%信頼区間"),verbatimTextOutput("confidenceIntervalAll"))
                 )
               )
               
@@ -265,21 +265,21 @@ shiny::shinyApp(
       conf.lowMale  <- odds_ratioMale  -  exp(1.96 * sqrt(1/MM + 1/(man - drugMM - reacMM + MM) + 1/(drugMM - MM) + 1/(reacMM - MM)))
       conf.highMale <- odds_ratioMale  +  exp(1.96 * sqrt(1/MM + 1/(man - drugMM - reacMM + MM) + 1/(drugMM - MM) + 1/(reacMM - MM)))
       output$confidenceIntervalMale <- renderText({
-        paste("下限:", sprintf("%.3f",conf.lowMale) , "上限:", sprintf("%.3f",conf.highMale))})
+        paste("下限:", sprintf("%.3f",conf.lowMale)," "  , "上限:", sprintf("%.3f",conf.highMale))})
       #女ー95%信頼区間の計算・表示
       conf.lowFemale  <- odds_ratioMale  -  exp(1.96 * sqrt(1/WW + 1/(woman - drugWW - reacWW + WW) + 1/(drugWW - WW) + 1/(reacWW - WW)))
       conf.highFemale <- odds_ratioMale  +  exp(1.96 * sqrt(1/WW + 1/(woman - drugWW - reacWW + WW) + 1/(drugWW - WW) + 1/(reacWW - WW)))
       output$confidenceIntervalFemale <- renderText({
-        paste("下限:", sprintf("%.3f",conf.lowFemale) , "上限:", sprintf("%.3f",conf.highFemale))})
+        paste("下限:", sprintf("%.3f",conf.lowFemale)," " , "上限:", sprintf("%.3f",conf.highFemale))})
       #全体ー95%信頼区間の計算・表示
       conf.lowAll  <- odds_ratioAll  -  exp(1.96 * sqrt(1/AA + 1/(ALL - drugAA - reacAA + AA) + 1/(drugAA - AA) + 1/(reacAA - AA)))
       conf.highAll <- odds_ratioAll  +  exp(1.96 * sqrt(1/AA + 1/(ALL - drugAA - reacAA + AA) + 1/(drugAA - AA) + 1/(reacAA - AA)))
       output$confidenceIntervalAll <- renderText({
-        paste("下限:", sprintf("%.3f",conf.lowAll),"上限:", sprintf("%.3f",conf.highAll))})
+        paste("下限:", sprintf("%.3f",conf.lowAll)," ","上限:", sprintf("%.3f",conf.highAll))})
       
       # 選択された薬剤名・有害事象を表示
       output$selectedDE <- renderText({
-        paste("薬剤名:",selected_drug ," ", "✖️" ," ","有害事象:", selected_event)
+        paste("＜",selected_drug ,"＞", "　✖️　" ,"＜", selected_event,"＞")
       })
     })
     
