@@ -66,6 +66,12 @@ shiny::shinyApp(
               
               mainPanel(
                 fluidRow(
+                  # 他の要素と同様に、選択された薬剤名と有害事象を表示するための要素を追加
+                  column(6,
+                         verbatimTextOutput("selectedDE")
+                  )
+                ),
+                fluidRow(
                   column(3,
                          h4("男性：クロス表"),
                          tableOutput("crossTableMale")
@@ -260,17 +266,17 @@ shiny::shinyApp(
       # 男ークロス表を作成・表示
       cross_tableMale <- matrix(c(MM, drugMM - MM, reacMM - MM, man - drugMM - reacMM + MM), nrow = 2, byrow = TRUE)
       rownames(cross_tableMale) <- c("服用◯", "服用❌")
-      colnames(cross_tableMale) <- c("有害事象：◯", "有害事象：❌")
+      colnames(cross_tableMale) <- c("有害事象◯", "有害事象❌")
       output$crossTableMale <- renderTable(cross_tableMale, rownames = TRUE)
       # 女ークロス表を作成・表示　
       cross_tableFemale <- matrix(c(WW, drugWW - WW, reacWW - WW, woman - drugWW - reacWW + WW), nrow = 2, byrow = TRUE)
       rownames(cross_tableFemale) <- c("服用◯", "服用❌")
-      colnames(cross_tableFemale) <- c("有害事象：◯", "有害事象：❌")
+      colnames(cross_tableFemale) <- c("有害事象◯", "有害事象❌")
       output$crossTableFemale <- renderTable(cross_tableFemale, rownames = TRUE)
       # 全体ークロス表を作成・表示　
       cross_tableAll <- matrix(c(AA, drugAA - AA, reacAA - AA, ALL - drugAA - reacAA + AA), nrow = 2, byrow = TRUE)
       rownames(cross_tableAll) <- c("服用◯", "服用❌")
-      colnames(cross_tableAll) <- c("有害事象：◯", "有害事象：❌")
+      colnames(cross_tableAll) <- c("有害事象◯", "有害事象❌")
       output$crossTableAll <- renderTable(cross_tableAll, rownames = TRUE)
       
       # 男ーオッズ比を計算・表示
@@ -298,10 +304,12 @@ shiny::shinyApp(
       conf.highAll <- odds_ratioAll  +  exp(1.96 * sqrt(1/AA + 1/(ALL - drugAA - reacAA + AA) + 1/(drugAA - AA) + 1/(reacAA - AA)))
       output$confidenceIntervalAll <- renderText({
         paste("下限:", sprintf("%.3f",conf.lowAll),"上限:", sprintf("%.3f",conf.highAll))})
+      
+      # 選択された薬剤名・有害事象を表示
+      output$selectedDE <- renderText({
+        paste("薬剤名:",selected_drug ," ", "✖️" ," ","有害事象:", selected_event)
+      })
     })
-    
-    
-    
     
   }
 )
