@@ -5,6 +5,45 @@ library("ggrepel")
 library("DT")
 library("fst")
 # test test test
+tbl_dtl <- fst::read.fst(path = "tbl_all.obj")
+#demo2を作成できた
+demo2 <- tbl_dtl %>%
+  select(-医薬品の関与, -年齢, -年代, -多剤併用, -転帰, -薬剤数, -一般名, -有害事象) %>%
+  distinct(識別番号,性別)
+##gg2の作成できた
+gg2 <- tbl_dtl %>%
+  select(-医薬品の関与, -年齢, -年代, -多剤併用, -転帰, -薬剤数, -性別, -有害事象) %>%
+  distinct(識別番号,一般名) %>%
+  rename("薬剤名" = "一般名")
+#drug3の作成できた
+drug3 <- tbl_dtl %>%
+  select(-医薬品の関与, -年齢, -年代, -多剤併用, -転帰, -薬剤数, -性別, -有害事象) %>%
+  distinct(識別番号,一般名) %>%
+  dplyr::group_by(一般名) %>%
+  dplyr::summarise(件数 = n()) %>%
+  dplyr::arrange(-件数) %>% 
+  dplyr::filter(件数 >= 10) %>%
+  select(-件数) 
+#reac2の作成できた
+reac2 <- tbl_dtl %>%
+  select(-医薬品の関与, -年齢, -年代, -多剤併用, -転帰, -薬剤数, -一般名) %>%
+  distinct(識別番号,有害事象,性別)
+#reac3の作成
+reac3 <- tbl_dtl %>%
+  dplyr::group_by(有害事象) %>%
+  dplyr::summarise(件数 = n()) %>%
+  dplyr::arrange(-件数) %>% 
+  dplyr::filter(件数 >= 10) %>%
+  select(-件数)
+#男女別・全体の総数を取得
+man <- sum(demo2$性別 == "男性")
+woman <- sum(demo2$性別 == "女性")
+ALL <- nrow(demo2)
+
+
+
+
+
 shiny::shinyApp(
   ui = shinydashboard::dashboardPage(
     skin = "black",
@@ -59,7 +98,7 @@ shiny::shinyApp(
             titlePanel("オッズ比計算アプリ"),
             sidebarLayout(
               sidebarPanel(
-                selectizeInput("drug3", "薬剤を選択", choices = unique(drug3$薬剤名), multiple = FALSE, options = list(placeholder = "薬剤名を入力してください")),
+                selectizeInput("drug3", "薬剤を選択", choices = unique(drug3$一般名), multiple = FALSE, options = list(placeholder = "薬剤名を入力してください")),
                 selectizeInput("reac3", "有害事象を選択", choices = unique(reac3$有害事象), multiple = FALSE, options = list(placeholder = "有害事象を入力してください")),
                 actionButton("calculate", "オッズ比計算")
               ),
@@ -157,41 +196,6 @@ shiny::shinyApp(
       })
     })
     
-    #ここにオッズのやつをかく
-    #demo2を作成できた
-    demo2 <- tbl_dtl %>%
-      select(-医薬品の関与, -年齢, -年代, -多剤併用, -転帰, -薬剤数, -一般名, -有害事象) %>%
-      distinct(識別番号,性別)
-    ##gg2の作成できた
-    gg2 <- tbl_dtl %>%
-      select(-医薬品の関与, -年齢, -年代, -多剤併用, -転帰, -薬剤数, -性別, -有害事象) %>%
-      distinct(識別番号,一般名) %>%
-      rename("薬剤名" = "一般名")
-    #drug3の作成できた
-    drug3 <- tbl_dtl %>%
-      select(-医薬品の関与, -年齢, -年代, -多剤併用, -転帰, -薬剤数, -性別, -有害事象) %>%
-      distinct(識別番号,一般名) %>%
-      dplyr::group_by(一般名) %>%
-      dplyr::summarise(件数 = n()) %>%
-      dplyr::arrange(-件数) %>% 
-      dplyr::filter(件数 >= 10) %>%
-      select(-件数) 
-    #reac2の作成できた
-    reac2 <- tbl_dtl %>%
-      select(-医薬品の関与, -年齢, -年代, -多剤併用, -転帰, -薬剤数, -一般名) %>%
-      distinct(識別番号,有害事象,性別)
-    #reac3の作成
-    reac3 <- tbl_dtl %>%
-      dplyr::group_by(有害事象) %>%
-      dplyr::summarise(件数 = n()) %>%
-      dplyr::arrange(-件数) %>% 
-      dplyr::filter(件数 >= 10) %>%
-      select(-件数)
-    
-    #男女別・全体の総数を取得
-    man <- sum(demo2$性別 == "男性")
-    woman <- sum(demo2$性別 == "女性")
-    ALL <- nrow(demo2)
     
     observeEvent(input$calculate, {
       selected_drug <- input$drug3
@@ -285,3 +289,4 @@ shiny::shinyApp(
     
   }
 )
+
