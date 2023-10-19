@@ -99,7 +99,7 @@ shiny::shinyApp(
             sidebarLayout(
               sidebarPanel(
                 selectizeInput("drug3", "薬剤を選択", choices = unique(drug3$一般名), multiple = FALSE, options = list(placeholder = "薬剤名を入力してください")),
-                selectizeInput("reac3", "有害事象を選択", choices = unique(reac3$有害事象), multiple = FALSE, options = list(placeholder = "有害事象を入力してください")),
+                selectizeInput("reac3", "有害事象を選択", choices = unique(reac3$有害事象), multiple = T, options = list(placeholder = "有害事象を入力してください")),
                 actionButton("calculate", "オッズ比計算")
               ),
               
@@ -283,8 +283,18 @@ shiny::shinyApp(
       
       # 選択された薬剤名・有害事象を表示
       output$selectedDE <- renderText({
-        paste("＜",selected_drug ,"＞", "　✖️　" ,"＜", selected_event,"＞")
-      })
+        paste("＜",selected_drug ,"＞", "　✖️　" ,"＜", 
+              if (length(input$reac3) > 0) {
+                selected_events <- paste("＜", input$drug3, "＞", "　✖️　", "＜", paste(input$reac3, collapse = " , "), "＞")
+                return(selected_events)
+              } else {
+                return(NULL)
+              }
+              
+              ,"＞")
+        })
+      
+      
     })
     
   }
