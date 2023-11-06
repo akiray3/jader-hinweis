@@ -42,8 +42,6 @@ ALL <- nrow(demo2)
 
 
 
-
-
 shiny::shinyApp(
   ui = shinydashboard::dashboardPage(
     skin = "black",
@@ -52,8 +50,8 @@ shiny::shinyApp(
       collapsed = TRUE,
       sidebarMenu(
         menuItem(text = "有害事象マップ", tabName = "page1", icon = icon("chart-line")),
-        menuItem(text = "全データ", tabName = "page2", icon = icon("chart-line")),
-        menuItem(text = "オッズ比計算", tabName = "page3", icon = icon("chart-line")),
+        # menuItem(text = "全データ", tabName = "page2", icon = icon("chart-line")),
+        menuItem(text = "オッズ比計算", tabName = "page2", icon = icon("chart-line")),
         menuItem(text = "Help", tabName = "help", icon = icon("house"))
       )
     ),
@@ -80,19 +78,19 @@ shiny::shinyApp(
             )
           )
         ),
+        # tabItem(
+        #   tabName = "page2",
+        #   tags$link(rel = "stylesheet", type = "text/css", href = "style.css"),
+        #   fluidRow(
+        #     shinydashboard::box(
+        #       width = 12, solidHeader = TRUE, collapsible	= TRUE,
+        #       status = "primary", title = "1. JADERデータ全体から抽出する",
+        #       DTOutput("dt_all")
+        #     )
+        #   )
+        # ),
         tabItem(
           tabName = "page2",
-          tags$link(rel = "stylesheet", type = "text/css", href = "style.css"),
-          fluidRow(
-            shinydashboard::box(
-              width = 12, solidHeader = TRUE, collapsible	= TRUE,
-              status = "primary", title = "1. JADERデータ全体から抽出する",
-              DTOutput("dt_all")
-            )
-          )
-        ),
-        tabItem(
-          tabName = "page3",
           tags$link(rel = "stylesheet", type = "text/css", href = "style.css"),
           fluidPage(
             titlePanel("オッズ比計算アプリ"),
@@ -102,7 +100,6 @@ shiny::shinyApp(
                 selectizeInput("reac3", "有害事象を選択", choices = unique(reac3$有害事象), multiple = T, options = list(placeholder = "有害事象を入力してください")),
                 actionButton("calculate", "オッズ比計算")
               ),
-              
               mainPanel(
                 fluidRow(
                   # 他の要素と同様に、選択された薬剤名と有害事象を表示するための要素を追加
@@ -124,7 +121,6 @@ shiny::shinyApp(
                   column(4,h4("全体：95%信頼区間"),verbatimTextOutput("confidenceIntervalAll"))
                 )
               )
-              
             )
           )
         ),
@@ -159,17 +155,17 @@ shiny::shinyApp(
         )
       )
     })
-    output$dt_all <- renderDT({
-      DT::datatable(
-        data = tbl_dtl,
-        filter = "top", rownames = FALSE,
-        selection = "single", extensions = "Buttons",
-        option = list(
-          scrollX = TRUE, responsive = TRUE, autoWidth = TRUE,
-          dom = "Blfrtip", buttons = c("csv", "excel")
-        )
-      )
-    })
+    # output$dt_all <- renderDT({
+    #   DT::datatable(
+    #     data = tbl_dtl,
+    #     filter = "top", rownames = FALSE,
+    #     selection = "single", extensions = "Buttons",
+    #     option = list(
+    #       scrollX = TRUE, responsive = TRUE, autoWidth = TRUE,
+    #       dom = "Blfrtip", buttons = c("csv", "excel")
+    #     )
+    #   )
+    # })
     observeEvent(input$dt_top200_rows_selected, {
       thisrow <- input$dt_top200_rows_selected
       tmpdata <- tbl200 %>%
