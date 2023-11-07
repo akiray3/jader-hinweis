@@ -4,43 +4,7 @@ library("tidyverse")
 library("ggrepel")
 library("DT")
 library("fst")
-# test test test
-tbl_dtl <- fst::read.fst(path = "tbl_all.obj")
-#demo2を作成できた
-demo2 <- tbl_dtl %>%
-  select(-医薬品の関与, -年齢, -年代, -多剤併用, -転帰, -薬剤数, -一般名, -有害事象) %>%
-  distinct(識別番号,性別)
-##gg2の作成できた
-gg2 <- tbl_dtl %>%
-  select(-医薬品の関与, -年齢, -年代, -多剤併用, -転帰, -薬剤数, -性別, -有害事象) %>%
-  distinct(識別番号,一般名) %>%
-  rename("薬剤名" = "一般名")
-#drug3の作成できた
-drug3 <- tbl_dtl %>%
-  select(-医薬品の関与, -年齢, -年代, -多剤併用, -転帰, -薬剤数, -性別, -有害事象) %>%
-  distinct(識別番号,一般名) %>%
-  dplyr::group_by(一般名) %>%
-  dplyr::summarise(件数 = n()) %>%
-  dplyr::arrange(-件数) %>% 
-  dplyr::filter(件数 >= 10) %>%
-  select(-件数) 
-#reac2の作成できた
-reac2 <- tbl_dtl %>%
-  select(-医薬品の関与, -年齢, -年代, -多剤併用, -転帰, -薬剤数, -一般名) %>%
-  distinct(識別番号,有害事象,性別)
-#reac3の作成
-reac3 <- tbl_dtl %>%
-  dplyr::group_by(有害事象) %>%
-  dplyr::summarise(件数 = n()) %>%
-  dplyr::arrange(-件数) %>% 
-  dplyr::filter(件数 >= 10) %>%
-  select(-件数)
-#男女別・全体の総数を取得
-man <- sum(demo2$性別 == "男性")
-woman <- sum(demo2$性別 == "女性")
-ALL <- nrow(demo2)
-
-
+library("data.table")
 
 shiny::shinyApp(
   ui = shinydashboard::dashboardPage(
@@ -96,7 +60,7 @@ shiny::shinyApp(
             titlePanel("オッズ比計算アプリ"),
             sidebarLayout(
               sidebarPanel(
-                selectizeInput("drug3", "薬剤を選択", choices = unique(drug3$一般名), multiple = FALSE, options = list(placeholder = "薬剤名を入力してください")),
+                selectizeInput("drug3", "薬剤を選択", choices = unique(drug3$薬剤名), multiple = FALSE, options = list(placeholder = "薬剤名を入力してください")),
                 selectizeInput("reac3", "有害事象を選択", choices = unique(reac3$有害事象), multiple = T, options = list(placeholder = "有害事象を入力してください")),
                 actionButton("calculate", "オッズ比計算")
               ),
@@ -197,83 +161,99 @@ shiny::shinyApp(
       selected_drug <- input$drug3
       selected_event <- input$reac3
       
-      gg3 <- merge(gg2, demo2, by = "識別番号", all = FALSE)
+      tbl_dtl2 <- tbl_dtl %>%
+        select(-医薬品の関与, -年齢, -年代, -多剤併用, -転帰, -薬剤数)
+      demo2 <- tbl_dtl2 %>%
+        select(-一般名, -有害事象) %>%
+        distinct(識別番号,性別)
+      ##gg2の作成できた
+      gg2 <- tbl_dtl2 %>%
+        select( -性別, -有害事象) %>%
+        distinct(識別番号,一般名) %>%
+        rename("薬剤名" = "一般名")
+      #drug3の作成できた
+      drug3 <- gg2 %>%
+        dplyr::group_by(薬剤名) %>%
+        dplyr::summarise(件数 = n()) %>%
+        dplyr::arrange(-件数) %>% 
+        dplyr::filter(件数 >= 10) %>%
+        select(-件数) 
+      #reac2の作成できた
+      reac2 <- tbl_dtl2 %>%
+        select(-一般名) %>%
+        distinct(識別番号,有害事象,性別)
+      #reac3の作成
+      reac3 <- tbl_dtl2 %>%
+        dplyr::group_by(有害事象) %>%
+        dplyr::summarise(件数 = n()) %>%
+        dplyr::arrange(-件数) %>% 
+        dplyr::filter(件数 >= 10) %>%
+        select(-件数)
+      
+      
+      gg3 <- merge.data.table(gg2, demo2, by = "識別番号", all = FALSE)
+      
       ae <- as.character(gg3$薬剤名)
-      # 男ー薬剤名ー識別番号
-      drugM <- gg3 %>%
-        filter(ae == selected_drug, 性別 == "男性") %>%
+      drug_amazon <- gg3%>%
+        filter(ae == selected_drug)
+      drugM <- drug_amazon %>%
+        filter(性別 == "男性")%>%
         pull(識別番号)
-      drugMM <- length(drugM)
-      # 女ー薬剤名ー識別番号
-      drugW <- gg3 %>%
-        filter(ae == selected_drug, 性別 == "女性") %>%
+      drugW <- drug_amazon %>%
+        filter(性別 == "女性")%>%
         pull(識別番号)
-      drugWW <- length(drugW)
-      # 全体ー薬剤名ー識別番号
-      drugA <- gg3 %>%
-        filter(ae == selected_drug) %>%
-        pull(識別番号)
-      drugAA <- length(drugA)
+      drugA <- c(drugM , drugW)
       
       ad <- as.character(reac2$有害事象)
-      # 男ー有害事象ー識別番号
-      reacM <- reac2 %>%
-        filter(ad == selected_event, 性別 == "男性") %>%
+      reac_amazon <- reac2 %>%
+        filter(ad == selected_event)
+      reacM <- reac_amazon %>%
+        filter(性別 == "男性")%>%
         pull(識別番号)
-      reacMM <- length(reacM)
-      MM <- sum(reacM %in% drugM)
-      # 女ー有害事象ー識別番号
-      reacW <- reac2 %>%
-        filter(ad == selected_event, 性別 == "女性") %>%
+      reacW <- reac_amazon %>%
+        filter(性別 == "女性")%>%
         pull(識別番号)
-      reacWW <- length(reacW)
-      WW <- sum(reacW %in% drugW)
-      # 全体ー有害事象ー識別番号
-      reacA <- reac2 %>%
-        filter(ad == selected_event) %>%
-        pull(識別番号)
-      reacAA <- length(reacA)
-      AA <- sum(reacA %in% drugA)
+      reacA <- c(reacM,reacW)
       
       # 男ークロス表を作成・表示
-      cross_tableMale <- matrix(c(MM, drugMM - MM, reacMM - MM, man - drugMM - reacMM + MM), nrow = 2, byrow = TRUE)
+      cross_tableMale <- matrix(c(sum(reacM %in% drugM), length(drugM) - sum(reacM %in% drugM), length(reacM) - sum(reacM %in% drugM), sum(demo2$性別 == "男性") - length(drugM) - length(reacM) + sum(reacM %in% drugM)), nrow = 2, byrow = TRUE)
       rownames(cross_tableMale) <- c("服用◯", "服用❌")
       colnames(cross_tableMale) <- c("有害事象◯", "有害事象❌")
       output$crossTableMale <- renderTable(cross_tableMale, rownames = TRUE)
       # 女ークロス表を作成・表示　
-      cross_tableFemale <- matrix(c(WW, drugWW - WW, reacWW - WW, woman - drugWW - reacWW + WW), nrow = 2, byrow = TRUE)
+      cross_tableFemale <- matrix(c(sum(reacW %in% drugW), length(drugW) - sum(reacW %in% drugW), length(reacW) - sum(reacW %in% drugW), sum(demo2$性別 == "女性") - length(drugW) - length(reacW) + sum(reacW %in% drugW)), nrow = 2, byrow = TRUE)
       rownames(cross_tableFemale) <- c("服用◯", "服用❌")
       colnames(cross_tableFemale) <- c("有害事象◯", "有害事象❌")
       output$crossTableFemale <- renderTable(cross_tableFemale, rownames = TRUE)
       # 全体ークロス表を作成・表示　
-      cross_tableAll <- matrix(c(AA, drugAA - AA, reacAA - AA, ALL - drugAA - reacAA + AA), nrow = 2, byrow = TRUE)
+      cross_tableAll <- matrix(c(sum(reacA %in% drugA), length(drugA) - sum(reacA %in% drugA), length(reacA) - sum(reacA %in% drugA), {sum(demo2$性別 == "男性") + sum(demo2$性別 == "女性")} - length(drugA) - length(reacA) + sum(reacA %in% drugA)), nrow = 2, byrow = TRUE)
       rownames(cross_tableAll) <- c("服用◯", "服用❌")
       colnames(cross_tableAll) <- c("有害事象◯", "有害事象❌")
       output$crossTableAll <- renderTable(cross_tableAll, rownames = TRUE)
       
       # 男ーオッズ比を計算・表示
-      odds_ratioMale <- (MM * (man-drugMM-reacMM + MM)) / ((drugMM - MM) * (reacMM - MM))
+      odds_ratioMale <- (sum(reacM %in% drugM) * (sum(demo2$性別 == "男性")-length(drugM)-length(reacM) + sum(reacM %in% drugM))) / ((length(drugM) - sum(reacM %in% drugM)) * (length(reacM) - sum(reacM %in% drugM)))
       output$oddsRatioMale <- renderText(paste("オッズ比:", sprintf("%.3f",odds_ratioMale)))
       # 女ーオッズ比を計算・表示
-      odds_ratioFemale <- (WW * (woman - drugWW - reacWW + WW)) / ((drugWW - WW) * (reacWW - WW))
+      odds_ratioFemale <- (sum(reacW %in% drugW) * (sum(demo2$性別 == "女性") - length(drugW) - length(reacW) + sum(reacW %in% drugW))) / ((length(drugW) - sum(reacW %in% drugW)) * (length(reacW) - sum(reacW %in% drugW)))
       output$oddsRatioFemale <- renderText(paste("オッズ比:", sprintf("%.3f",odds_ratioFemale)))
       # 全体ーオッズ比を計算・表示
-      odds_ratioAll <- (AA * (ALL - drugAA - reacAA + AA)) / ((drugAA - AA) * (reacAA - AA))
+      odds_ratioAll <- (sum(reacA %in% drugA) * ({sum(demo2$性別 == "男性") + sum(demo2$性別 == "女性")} - length(drugA) - length(reacA) + sum(reacA %in% drugA))) / ((length(drugA) - sum(reacA %in% drugA)) * (length(reacA) - sum(reacA %in% drugA)))
       output$oddsRatioAll <- renderText(paste("オッズ比:", sprintf("%.3f",odds_ratioAll)))
       
       #男ー95%信頼区間の計算・表示
-      conf.lowMale  <- odds_ratioMale  -  exp(1.96 * sqrt(1/MM + 1/(man - drugMM - reacMM + MM) + 1/(drugMM - MM) + 1/(reacMM - MM)))
-      conf.highMale <- odds_ratioMale  +  exp(1.96 * sqrt(1/MM + 1/(man - drugMM - reacMM + MM) + 1/(drugMM - MM) + 1/(reacMM - MM)))
+      conf.lowMale  <- odds_ratioMale  -  exp(1.96 * sqrt(1/sum(reacM %in% drugM) + 1/(sum(demo2$性別 == "男性") - length(drugM) - length(reacM) + sum(reacM %in% drugM)) + 1/(length(drugM) - sum(reacM %in% drugM)) + 1/(length(reacM) - sum(reacM %in% drugM))))
+      conf.highMale <- odds_ratioMale  +  exp(1.96 * sqrt(1/sum(reacM %in% drugM) + 1/(sum(demo2$性別 == "男性") - length(drugM) - length(reacM) + sum(reacM %in% drugM)) + 1/(length(drugM) - sum(reacM %in% drugM)) + 1/(length(reacM) - sum(reacM %in% drugM))))
       output$confidenceIntervalMale <- renderText({
         paste("下限:", sprintf("%.3f",conf.lowMale)," "  , "上限:", sprintf("%.3f",conf.highMale))})
       #女ー95%信頼区間の計算・表示
-      conf.lowFemale  <- odds_ratioMale  -  exp(1.96 * sqrt(1/WW + 1/(woman - drugWW - reacWW + WW) + 1/(drugWW - WW) + 1/(reacWW - WW)))
-      conf.highFemale <- odds_ratioMale  +  exp(1.96 * sqrt(1/WW + 1/(woman - drugWW - reacWW + WW) + 1/(drugWW - WW) + 1/(reacWW - WW)))
+      conf.lowFemale  <- odds_ratioMale  -  exp(1.96 * sqrt(1/sum(reacW %in% drugW) + 1/(sum(demo2$性別 == "女性") - length(drugW) - length(reacW) + sum(reacW %in% drugW)) + 1/(length(drugW) - sum(reacW %in% drugW)) + 1/(length(reacW) - sum(reacW %in% drugW))))
+      conf.highFemale <- odds_ratioMale  +  exp(1.96 * sqrt(1/sum(reacW %in% drugW) + 1/(sum(demo2$性別 == "女性") - length(drugW) - length(reacW) + sum(reacW %in% drugW)) + 1/(length(drugW) - sum(reacW %in% drugW)) + 1/(length(reacW) - sum(reacW %in% drugW))))
       output$confidenceIntervalFemale <- renderText({
         paste("下限:", sprintf("%.3f",conf.lowFemale)," " , "上限:", sprintf("%.3f",conf.highFemale))})
       #全体ー95%信頼区間の計算・表示
-      conf.lowAll  <- odds_ratioAll  -  exp(1.96 * sqrt(1/AA + 1/(ALL - drugAA - reacAA + AA) + 1/(drugAA - AA) + 1/(reacAA - AA)))
-      conf.highAll <- odds_ratioAll  +  exp(1.96 * sqrt(1/AA + 1/(ALL - drugAA - reacAA + AA) + 1/(drugAA - AA) + 1/(reacAA - AA)))
+      conf.lowAll  <- odds_ratioAll  -  exp(1.96 * sqrt(1/sum(reacA %in% drugA) + 1/({sum(demo2$性別 == "男性") + sum(demo2$性別 == "女性")} - length(drugA) - length(reacA) + sum(reacA %in% drugA)) + 1/(length(drugA) - sum(reacA %in% drugA)) + 1/(length(reacA) - sum(reacA %in% drugA))))
+      conf.highAll <- odds_ratioAll  +  exp(1.96 * sqrt(1/sum(reacA %in% drugA) + 1/({sum(demo2$性別 == "男性") + sum(demo2$性別 == "女性")} - length(drugA) - length(reacA) + sum(reacA %in% drugA)) + 1/(length(drugA) - sum(reacA %in% drugA)) + 1/(length(reacA) - sum(reacA %in% drugA))))
       output$confidenceIntervalAll <- renderText({
         paste("下限:", sprintf("%.3f",conf.lowAll)," ","上限:", sprintf("%.3f",conf.highAll))})
       
@@ -288,7 +268,7 @@ shiny::shinyApp(
               }
               
               ,"＞")
-        })
+      })
       
       
     })
