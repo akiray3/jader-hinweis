@@ -5,7 +5,9 @@ account: akiray3
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 9298686
-bundleId: 7893334
+bundleId: 7897813
 url: https://akiray3.shinyapps.io/jader-hinweis/
-when: 1699253952.3209
-lastSyncTime: 1699253952.32091
+when: 1699340969.60173
+lastSyncTime: 1699340969.60174
+asMultiple: FALSE
+asStatic: FALSE

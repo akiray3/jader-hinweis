@@ -6,6 +6,37 @@ library("DT")
 library("fst")
 library("data.table")
 
+tbl_dtl <- fst::read.fst(path = "tbl_all.obj")
+tbl_dtl2 <- tbl_dtl %>%
+  select(-医薬品の関与, -年齢, -年代, -多剤併用, -転帰, -薬剤数)
+demo2 <- tbl_dtl2 %>%
+  select(-一般名, -有害事象) %>%
+  distinct(識別番号,性別)
+##gg2の作成できた
+gg2 <- tbl_dtl2 %>%
+  select( -性別, -有害事象) %>%
+  distinct(識別番号,一般名) %>%
+  rename("薬剤名" = "一般名")
+#drug3の作成できた
+drug3 <- gg2 %>%
+  dplyr::group_by(薬剤名) %>%
+  dplyr::summarise(件数 = n()) %>%
+  dplyr::arrange(-件数) %>% 
+  dplyr::filter(件数 >= 10) %>%
+  select(-件数) 
+#reac2の作成できた
+reac2 <- tbl_dtl2 %>%
+  select(-一般名) %>%
+  distinct(識別番号,有害事象,性別)
+#reac3の作成
+reac3 <- tbl_dtl2 %>%
+  dplyr::group_by(有害事象) %>%
+  dplyr::summarise(件数 = n()) %>%
+  dplyr::arrange(-件数) %>% 
+  dplyr::filter(件数 >= 10) %>%
+  select(-件数)
+
+
 shiny::shinyApp(
   ui = shinydashboard::dashboardPage(
     skin = "black",
@@ -160,36 +191,6 @@ shiny::shinyApp(
     observeEvent(input$calculate, {
       selected_drug <- input$drug3
       selected_event <- input$reac3
-      
-      tbl_dtl2 <- tbl_dtl %>%
-        select(-医薬品の関与, -年齢, -年代, -多剤併用, -転帰, -薬剤数)
-      demo2 <- tbl_dtl2 %>%
-        select(-一般名, -有害事象) %>%
-        distinct(識別番号,性別)
-      ##gg2の作成できた
-      gg2 <- tbl_dtl2 %>%
-        select( -性別, -有害事象) %>%
-        distinct(識別番号,一般名) %>%
-        rename("薬剤名" = "一般名")
-      #drug3の作成できた
-      drug3 <- gg2 %>%
-        dplyr::group_by(薬剤名) %>%
-        dplyr::summarise(件数 = n()) %>%
-        dplyr::arrange(-件数) %>% 
-        dplyr::filter(件数 >= 10) %>%
-        select(-件数) 
-      #reac2の作成できた
-      reac2 <- tbl_dtl2 %>%
-        select(-一般名) %>%
-        distinct(識別番号,有害事象,性別)
-      #reac3の作成
-      reac3 <- tbl_dtl2 %>%
-        dplyr::group_by(有害事象) %>%
-        dplyr::summarise(件数 = n()) %>%
-        dplyr::arrange(-件数) %>% 
-        dplyr::filter(件数 >= 10) %>%
-        select(-件数)
-      
       
       gg3 <- merge.data.table(gg2, demo2, by = "識別番号", all = FALSE)
       
