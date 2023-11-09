@@ -195,27 +195,48 @@ shiny::shinyApp(
       gg3 <- merge.data.table(gg2, demo2, by = "識別番号", all = FALSE)
       
       ae <- as.character(gg3$薬剤名)
-      drug_amazon <- gg3%>%
+      drug_amazon <- gg3 %>%
         filter(ae == selected_drug)
       drugM <- drug_amazon %>%
-        filter(性別 == "男性")%>%
+        filter(性別 == "男性") %>%
         pull(識別番号)
       drugW <- drug_amazon %>%
-        filter(性別 == "女性")%>%
+        filter(性別 == "女性") %>%
         pull(識別番号)
-      drugA <- c(drugM , drugW)
+      drugA <- c(drugM, drugW)
       
-      ad <- as.character(reac2$有害事象)
-      reac_amazon <- reac2 %>%
-        filter(ad == selected_event)
-      reacM <- reac_amazon %>%
-        filter(性別 == "男性")%>%
-        pull(識別番号)
-      reacW <- reac_amazon %>%
-        filter(性別 == "女性")%>%
-        pull(識別番号)
-      reacA <- c(reacM,reacW)
-      
+      # selected_eventが複数選択されている場合
+      if (length(selected_event) > 1) {
+        reacA <- reacM <- reacW <- as.numeric(0)  
+        
+        for (event in selected_event) {
+          ad <- as.character(reac2$有害事象)
+          reac_amazon <- reac2 %>%
+            filter(ad == event)
+          reacM_event <- reac_amazon %>%
+            filter(性別 == "男性") %>%
+            pull(識別番号)
+          reacW_event <- reac_amazon %>%
+            filter(性別 == "女性") %>%
+            pull(識別番号)
+          reacM <- union(reacM, reacM_event)  
+          reacW <- union(reacW, reacW_event)  
+          reacA <- union(reacA, c(reacM_event, reacW_event))  
+        }
+      } else {
+        ad <- as.character(reac2$有害事象)
+        reac_amazon <- reac2 %>%
+          filter(ad == selected_event)
+        reacM <- reac_amazon %>%
+          filter(性別 == "男性") %>%
+          pull(識別番号)
+        reacW <- reac_amazon %>%
+          filter(性別 == "女性") %>%
+          pull(識別番号)
+        reacA <- c(reacM, reacW)
+      }
+
+     
       # 男ークロス表を作成・表示
       cross_tableMale <- matrix(c(sum(reacM %in% drugM), length(drugM) - sum(reacM %in% drugM), length(reacM) - sum(reacM %in% drugM), sum(demo2$性別 == "男性") - length(drugM) - length(reacM) + sum(reacM %in% drugM)), nrow = 2, byrow = TRUE)
       rownames(cross_tableMale) <- c("服用◯", "服用❌")
