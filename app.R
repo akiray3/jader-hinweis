@@ -7,6 +7,9 @@ library("fst")
 library("data.table")
 
 tbl_dtl <- fst::read.fst(path = "tbl_all.obj")
+tbl200 <- fst::read.fst(path = "tbl_200.obj") %>%
+    dplyr::arrange(性別, 件数)
+# tbl_dtl <- fst::read.fst(path = "tbl_all.obj")
 tbl_dtl2 <- tbl_dtl %>%
   select(-医薬品の関与, -年齢, -年代, -多剤併用, -転帰, -薬剤数)
 demo2 <- tbl_dtl2 %>%
@@ -73,17 +76,6 @@ shiny::shinyApp(
             )
           )
         ),
-        # tabItem(
-        #   tabName = "page2",
-        #   tags$link(rel = "stylesheet", type = "text/css", href = "style.css"),
-        #   fluidRow(
-        #     shinydashboard::box(
-        #       width = 12, solidHeader = TRUE, collapsible	= TRUE,
-        #       status = "primary", title = "1. JADERデータ全体から抽出する",
-        #       DTOutput("dt_all")
-        #     )
-        #   )
-        # ),
         tabItem(
           tabName = "page2",
           tags$link(rel = "stylesheet", type = "text/css", href = "style.css"),
@@ -97,7 +89,6 @@ shiny::shinyApp(
               ),
               mainPanel(
                 fluidRow(
-                  # 他の要素と同様に、選択された薬剤名と有害事象を表示するための要素を追加
                   column(8,
                          verbatimTextOutput("selectedDE")
                   )
@@ -132,9 +123,9 @@ shiny::shinyApp(
     )
   ),
   server = function(input, output, session) {
-    tbl200 <- fst::read.fst(path = "tbl_200.obj") %>%
-       dplyr::arrange(性別, 件数)
-    tbl_dtl <- fst::read.fst(path = "tbl_all.obj")
+    # tbl200 <- fst::read.fst(path = "tbl_200.obj") %>%
+    #    dplyr::arrange(性別, 件数)
+    # tbl_dtl <- fst::read.fst(path = "tbl_all.obj")
     figlist <- readRDS("fig_list.obj")
     output$dt_top200 <- renderDT({
       DT::datatable(
@@ -150,17 +141,6 @@ shiny::shinyApp(
         )
       )
     })
-    # output$dt_all <- renderDT({
-    #   DT::datatable(
-    #     data = tbl_dtl,
-    #     filter = "top", rownames = FALSE,
-    #     selection = "single", extensions = "Buttons",
-    #     option = list(
-    #       scrollX = TRUE, responsive = TRUE, autoWidth = TRUE,
-    #       dom = "Blfrtip", buttons = c("csv", "excel")
-    #     )
-    #   )
-    # })
     observeEvent(input$dt_top200_rows_selected, {
       thisrow <- input$dt_top200_rows_selected
       tmpdata <- tbl200 %>%
@@ -186,8 +166,6 @@ shiny::shinyApp(
         )
       })
     })
-    
-    
     observeEvent(input$calculate, {
       selected_drug <- input$drug3
       selected_event <- input$reac3
