@@ -6,36 +6,35 @@ library("DT")
 library("fst")
 library("data.table")
 
+tbl200 <- fst::read.fst(path = "tbl_200.obj") %>%
+  dplyr::arrange(性別, 件数)
+figlist <- readRDS("fig_list.obj")
 tbl_dtl <- fst::read.fst(path = "tbl_all.obj")
-tbl_dtl2 <- tbl_dtl %>%
-  select(-医薬品の関与, -年齢, -年代, -多剤併用, -転帰, -薬剤数)
-demo2 <- tbl_dtl2 %>%
-  select(-一般名, -有害事象) %>%
-  distinct(識別番号,性別)
+demo2 <- dplyr::distinct(.data = tbl_dtl, 識別番号,性別)
 ##gg2の作成できた
-gg2 <- tbl_dtl2 %>%
-  select( -性別, -有害事象) %>%
-  distinct(識別番号,一般名) %>%
-  rename("薬剤名" = "一般名")
+gg3 <- tbl_dtl %>%
+  distinct(識別番号, 一般名) %>%
+  rename("薬剤名" = "一般名") %>%
+  merge.data.table(., demo2, by = "識別番号", all = FALSE)
 #drug3の作成できた
-drug3 <- gg2 %>%
+drug3 <- gg3 %>%
   dplyr::group_by(薬剤名) %>%
   dplyr::summarise(件数 = n()) %>%
   dplyr::arrange(-件数) %>% 
   dplyr::filter(件数 >= 10) %>%
   select(-件数) 
 #reac2の作成できた
-reac2 <- tbl_dtl2 %>%
-  select(-一般名) %>%
-  distinct(識別番号,有害事象,性別)
+reac2 <-  dplyr::distinct(.data = tbl_dtl, 識別番号,有害事象,性別)
 #reac3の作成
-reac3 <- tbl_dtl2 %>%
+reac3 <- tbl_dtl %>%
   dplyr::group_by(有害事象) %>%
   dplyr::summarise(件数 = n()) %>%
   dplyr::arrange(-件数) %>% 
   dplyr::filter(件数 >= 10) %>%
-  select(-件数)
-
+  dplyr::pull(-件数) %>%
+  as.character()
+ae <- as.character(gg3$薬剤名)
+ad <- as.character(reac2$有害事象)
 
 shiny::shinyApp(
   ui = shinydashboard::dashboardPage(
@@ -92,7 +91,7 @@ shiny::shinyApp(
             sidebarLayout(
               sidebarPanel(
                 selectizeInput("drug3", "薬剤を選択", choices = unique(drug3$薬剤名), multiple = FALSE, options = list(placeholder = "薬剤名を入力してください")),
-                selectizeInput("reac3", "有害事象を選択", choices = unique(reac3$有害事象), multiple = T, options = list(placeholder = "有害事象を入力してください")),
+                selectizeInput("reac3", "有害事象を選択", choices = unique(reac3), multiple = T, options = list(placeholder = "有害事象を入力してください")),
                 actionButton("calculate", "オッズ比計算")
               ),
               mainPanel(
@@ -132,10 +131,6 @@ shiny::shinyApp(
     )
   ),
   server = function(input, output, session) {
-    tbl200 <- fst::read.fst(path = "tbl_200.obj") %>%
-       dplyr::arrange(性別, 件数)
-    tbl_dtl <- fst::read.fst(path = "tbl_all.obj")
-    figlist <- readRDS("fig_list.obj")
     output$dt_top200 <- renderDT({
       DT::datatable(
         data = tbl200, filter = "top", rownames = FALSE, selection = "single",
@@ -191,31 +186,37 @@ shiny::shinyApp(
     observeEvent(input$calculate, {
       selected_drug <- input$drug3
       selected_event <- input$reac3
+      # selected_drug <- "プレドニゾロン"
+      # selected_event <- "間質性肺疾患"
+      # nowtime <- Sys.time()
+      # Sys.time() - nowtime
+      # nowtime <- Sys.time()
+      # drug_amazon <- gg3%>%
+      #   filter(ae == selected_drug)
+      # Sys.time() - nowtime
+
+      # drugM <- drug_amazon %>%
+      #   filter(性別 == "男性")%>%
+      #   pull(識別番号)
+      # drugW <- drug_amazon %>%
+      #   filter(性別 == "女性")%>%
+      #   pull(識別番号)
       
-      gg3 <- merge.data.table(gg2, demo2, by = "識別番号", all = FALSE)
-      
-      ae <- as.character(gg3$薬剤名)
-      drug_amazon <- gg3%>%
-        filter(ae == selected_drug)
-      drugM <- drug_amazon %>%
-        filter(性別 == "男性")%>%
-        pull(識別番号)
-      drugW <- drug_amazon %>%
-        filter(性別 == "女性")%>%
-        pull(識別番号)
-      drugA <- c(drugM , drugW)
-      
-      ad <- as.character(reac2$有害事象)
-      reac_amazon <- reac2 %>%
-        filter(ad == selected_event)
-      reacM <- reac_amazon %>%
-        filter(性別 == "男性")%>%
-        pull(識別番号)
-      reacW <- reac_amazon %>%
-        filter(性別 == "女性")%>%
-        pull(識別番号)
-      reacA <- c(reacM,reacW)
-      
+      # reac_amazon <- reac2 %>%
+      #   filter(ad == selected_event)
+      # reacM <- reac_amazon %>%
+      #   filter(性別 == "男性")%>%
+      #   pull(識別番号)
+      # reacW <- reac_amazon %>%
+      #   filter(性別 == "女性")%>%
+      #   pull(識別番号)
+      drugM <- gg3$識別番号[which(gg3$薬剤名 == selected_drug & gg3$性別 == "男性")]
+      drugW <- gg3$識別番号[which(gg3$薬剤名 == selected_drug & gg3$性別 == "女性")]
+      reacM <- reac2$識別番号[which(reac2$有害事象 %in% selected_event & reac2$性別 == "男性")]
+      reacW <- reac2$識別番号[which(reac2$有害事象 %in% selected_event & reac2$性別 == "女性")]
+      drugA <- c(drugM ,drugW)
+      reacA <- c(reacM, reacW)
+
       # 男ークロス表を作成・表示
       cross_tableMale <- matrix(c(sum(reacM %in% drugM), length(drugM) - sum(reacM %in% drugM), length(reacM) - sum(reacM %in% drugM), sum(demo2$性別 == "男性") - length(drugM) - length(reacM) + sum(reacM %in% drugM)), nrow = 2, byrow = TRUE)
       rownames(cross_tableMale) <- c("服用◯", "服用❌")
