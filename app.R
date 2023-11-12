@@ -244,7 +244,7 @@ shiny::shinyApp(
       odds_ratioFemale <- (sum(reacW %in% drugW) * (sum(demo2$性別 == "女性") - length(drugW) - length(reacW) + sum(reacW %in% drugW))) / ((length(drugW) - sum(reacW %in% drugW)) * (length(reacW) - sum(reacW %in% drugW)))
       output$oddsRatioFemale <- renderText(paste("オッズ比:", sprintf("%.3f",odds_ratioFemale)))
       # 全体ーオッズ比を計算・表示
-      odds_ratioAll <- (sum(reacA %in% drugA) * ({sum(demo2$性別 == "男性") + sum(demo2$性別 == "女性")} - length(drugA) - length(reacA) + sum(reacA %in% drugA))) / ((length(drugA) - sum(reacA %in% drugA)) * (length(reacA) - sum(reacA %in% drugA)))
+      odds_ratioAll <- ((sum(reacA %in% drugA)) /(length(drugA) - sum(reacA %in% drugA)))/((length(reacA) - sum(reacA %in% drugA)) /({sum(demo2$性別 == "男性") + sum(demo2$性別 == "女性")} - length(drugA) - length(reacA) + sum(reacA %in% drugA)))
       output$oddsRatioAll <- renderText(paste("オッズ比:", sprintf("%.3f",odds_ratioAll)))
       
       #男ー95%信頼区間の計算・表示
