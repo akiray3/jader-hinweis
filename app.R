@@ -6,16 +6,12 @@ library("DT")
 library("fst")
 library("data.table")
 
+
 figlist <- readRDS("fig_list.obj")
 tbl200 <- fst::read.fst(path = "tbl_200.obj") %>%
   dplyr::arrange(性別, 件数)
 tbl_dtl <- fst::read.fst(path = "tbl_all.obj")
 demo2 <- dplyr::distinct(.data = tbl_dtl, 識別番号,性別)
-tbl_dtl2 <- tbl_dtl %>%
-  select(-医薬品の関与, -年齢, -年代, -多剤併用, -転帰, -薬剤数)
-demo2 <- tbl_dtl2 %>%
-  select(-一般名, -有害事象) %>%
-  distinct(識別番号,性別)
 ##gg2の作成できた
 gg3 <- tbl_dtl %>%
   distinct(識別番号, 一般名) %>%
@@ -38,8 +34,9 @@ reac3 <- tbl_dtl %>%
   dplyr::filter(件数 >= 10) %>%
   dplyr::pull(-件数) %>%
   as.character()
-ae <- as.character(gg3$薬剤名)
-ad <- as.character(reac2$有害事象)
+
+
+
 
 shiny::shinyApp(
   ui = shinydashboard::dashboardPage(
@@ -166,60 +163,14 @@ shiny::shinyApp(
     observeEvent(input$calculate, {
       selected_drug <- input$drug3
       selected_event <- input$reac3
+      #selected_drug <- "プレドニゾロン"
+      #selected_event <- "間質性肺疾患"
       drugM <- gg3$識別番号[which(gg3$薬剤名 == selected_drug & gg3$性別 == "男性")]
       drugW <- gg3$識別番号[which(gg3$薬剤名 == selected_drug & gg3$性別 == "女性")]
       drugA <- union(drugM ,drugW)
       reacM <- reac2$識別番号[which(reac2$有害事象 %in% selected_event & reac2$性別 == "男性")]
       reacW <- reac2$識別番号[which(reac2$有害事象 %in% selected_event & reac2$性別 == "女性")]
       reacA <- union(reacM, reacW)
-
-#      drug_amazon <- gg3 %>%
-#        filter(薬剤名 == selected_drug)
-#      drugM <- drug_amazon %>%
-#        filter(性別 == "男性") %>%
-#        pull(識別番号)
-#      drugW <- drug_amazon %>%
-#        filter(性別 == "女性") %>%
-#        pull(識別番号)
-#      drugA <- c(drugM, drugW)
-     
-#      reac_amazon <- reac2[which(reac2$有害事象 %in% selected_event), ]
-#      reacM <- reac_amazon$識別番号[which(reac2$性別 == "男性")]       
-#      reacW <- reac_amazon$識別番号[which(reac2$性別 == "女性")]
-#      reacA <- c(reacM, reacW)
-     
-     
-     # selected_eventが複数選択されている場合
-#      if (length(selected_event) > 1) {
-#        reacA <- reacM <- reacW <- as.numeric(0)  
-#        
-#        for (event in selected_event) {
-#          ad <- as.character(reac2$有害事象)
-#          reac_amazon <- reac2 %>%
-#            filter(ad == event)
-#          reacM_event <- reac_amazon %>%
-#            filter(性別 == "男性") %>%
-#            pull(識別番号)
-#          reacW_event <- reac_amazon %>%
-#            filter(性別 == "女性") %>%
-#            pull(識別番号)
-#          reacM <- union(reacM, reacM_event)  
-#          reacW <- union(reacW, reacW_event)  
-#          reacA <- union(reacA, c(reacM_event, reacW_event))  
-#        }
-#      } else {
-#        ad <- as.character(reac2$有害事象)
-#        reac_amazon <- reac2 %>%
-#          filter(ad == selected_event)
-#        reacM <- reac_amazon %>%
-#          filter(性別 == "男性") %>%
-#          pull(識別番号)
-#        reacW <- reac_amazon %>%
-#          filter(性別 == "女性") %>%
-#          pull(識別番号)
-#        reacA <- c(reacM, reacW)
-#      }
-
       
       # 男ークロス表を作成・表示
       cross_tableMale <- matrix(c(sum(reacM %in% drugM), length(drugM) - sum(reacM %in% drugM), length(reacM) - sum(reacM %in% drugM), sum(demo2$性別 == "男性") - length(drugM) - length(reacM) + sum(reacM %in% drugM)), nrow = 2, byrow = TRUE)
@@ -244,7 +195,6 @@ shiny::shinyApp(
       odds_ratioFemale <- (sum(reacW %in% drugW) * (sum(demo2$性別 == "女性") - length(drugW) - length(reacW) + sum(reacW %in% drugW))) / ((length(drugW) - sum(reacW %in% drugW)) * (length(reacW) - sum(reacW %in% drugW)))
       output$oddsRatioFemale <- renderText(paste("オッズ比:", sprintf("%.3f",odds_ratioFemale)))
       # 全体ーオッズ比を計算・表示
-      #odds_ratioAll <- (sum(reacA %in% drugA) * ({sum(demo2$性別 == "男性") + sum(demo2$性別 == "女性")} - length(drugA) - length(reacA) + sum(reacA %in% drugA))) / ((length(drugA) - sum(reacA %in% drugA)) * (length(reacA) - sum(reacA %in% drugA)))
       odds_ratioAll <- ((sum(reacA %in% drugA)) /(length(drugA) - sum(reacA %in% drugA)))/((length(reacA) - sum(reacA %in% drugA)) /({sum(demo2$性別 == "男性") + sum(demo2$性別 == "女性")} - length(drugA) - length(reacA) + sum(reacA %in% drugA)))
       output$oddsRatioAll <- renderText(paste("オッズ比:", sprintf("%.3f",odds_ratioAll)))
       
@@ -263,6 +213,9 @@ shiny::shinyApp(
       conf.highAll <- odds_ratioAll  +  exp(1.96 * sqrt(1/sum(reacA %in% drugA) + 1/({sum(demo2$性別 == "男性") + sum(demo2$性別 == "女性")} - length(drugA) - length(reacA) + sum(reacA %in% drugA)) + 1/(length(drugA) - sum(reacA %in% drugA)) + 1/(length(reacA) - sum(reacA %in% drugA))))
       output$confidenceIntervalAll <- renderText({
         paste("下限:", sprintf("%.3f",conf.lowAll)," ","上限:", sprintf("%.3f",conf.highAll))})
+      
+      
+      
       
       # 選択された薬剤名・有害事象を表示
       output$selectedDE <- renderText({
