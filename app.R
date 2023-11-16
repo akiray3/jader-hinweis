@@ -78,12 +78,12 @@ shiny::shinyApp(
           tabName = "page2",
           tags$link(rel = "stylesheet", type = "text/css", href = "style.css"),
           fluidPage(
-            titlePanel("オッズ比計算アプリ"),
+            titlePanel("オッズ比計算"),
             sidebarLayout(
               sidebarPanel(
                 selectizeInput("drug3", "薬剤を選択", choices = unique(drug3$薬剤名), multiple = FALSE, options = list(placeholder = "薬剤名を入力してください")),
                 selectizeInput("reac3", "有害事象を選択", choices = unique(reac3), multiple = T, options = list(placeholder = "有害事象を入力してください")),
-                actionButton("calculate", "オッズ比計算")
+                actionButton("calculate", "計算")
               ),
               mainPanel(
                 fluidRow(
@@ -100,9 +100,9 @@ shiny::shinyApp(
                   column(4,h4("女性：オッズ比"),verbatimTextOutput("oddsRatioFemale")),
                   column(4,h4("全体：オッズ比"),verbatimTextOutput("oddsRatioAll"))),
                 fluidRow(
-                  column(4,h4("男性：95%信頼区間"),verbatimTextOutput("confidenceIntervalMale")),
-                  column(4,h4("女性：95%信頼区間"),verbatimTextOutput("confidenceIntervalFemale")),
-                  column(4,h4("全体：95%信頼区間"),verbatimTextOutput("confidenceIntervalAll"))
+                  column(4,h4("男性：95%信頼区間"),verbatimTextOutput("CI_Male")),
+                  column(4,h4("女性：95%信頼区間"),verbatimTextOutput("CI_Female")),
+                  column(4,h4("全体：95%信頼区間"),verbatimTextOutput("CI_All"))
                 )
               )
             )
@@ -166,73 +166,61 @@ shiny::shinyApp(
       #selected_drug <- "プレドニゾロン"
       #selected_event <- c("薬物相互作用","増強的薬物相互作用")
       drugM <- gg3$識別番号[which(gg3$薬剤名 == selected_drug & gg3$性別 == "男性")]
-      drugW <- gg3$識別番号[which(gg3$薬剤名 == selected_drug & gg3$性別 == "女性")]
-      drugA <- union(drugM ,drugW)
+      drugF <- gg3$識別番号[which(gg3$薬剤名 == selected_drug & gg3$性別 == "女性")]
+      drugA <- union(drugM ,drugF)
       reacM <- reac2$識別番号[which(reac2$有害事象 %in% selected_event & reac2$性別 == "男性")]
-      reacW <- reac2$識別番号[which(reac2$有害事象 %in% selected_event & reac2$性別 == "女性")]
-      reacA <- union(reacM, reacW)
+      reacF <- reac2$識別番号[which(reac2$有害事象 %in% selected_event & reac2$性別 == "女性")]
+      reacA <- union(reacM, reacF)
       
       # 男ークロス表を作成・表示
-      #cross_Male <- matrix(c(sum(reacM %in% drugM), length(drugM) - sum(reacM %in% drugM), length(reacM) - sum(reacM %in% drugM), sum(demo2$性別 == "男性") - length(drugM) - length(reacM) + sum(reacM %in% drugM)), nrow = 2, byrow = TRUE)
       cross_Male <- matrix(c(length(intersect(reacM, drugM)), length(drugM) - length(intersect(reacM, drugM)), length(reacM) - length(intersect(reacM, drugM)), sum(demo2$性別 == "男性") - length(drugM) - length(reacM) + length(intersect(reacM, drugM))), nrow = 2, byrow = TRUE)
       rownames(cross_Male) <- c("服用◯", "服用❌")
       colnames(cross_Male) <- c("有害事象◯", "有害事象❌")
       output$crossTableMale <- renderTable(cross_Male, rownames = TRUE)
       # 女ークロス表を作成・表示　
-      #cross_Female <- matrix(c(sum(reacW %in% drugW), length(drugW) - sum(reacW %in% drugW), length(reacW) - sum(reacW %in% drugW), sum(demo2$性別 == "女性") - length(drugW) - length(reacW) + sum(reacW %in% drugW)), nrow = 2, byrow = TRUE)
-      cross_Female <- matrix(c(length(intersect(reacW, drugW)), length(drugW) - length(intersect(reacW, drugW)), length(reacW) - length(intersect(reacW, drugW)), sum(demo2$性別 == "女性") - length(drugW) - length(reacW) + length(intersect(reacW, drugW))), nrow = 2, byrow = TRUE)
+      cross_Female <- matrix(c(length(intersect(reacF, drugF)), length(drugF) - length(intersect(reacF, drugF)), length(reacF) - length(intersect(reacF, drugF)), sum(demo2$性別 == "女性") - length(drugF) - length(reacF) + length(intersect(reacF, drugF))), nrow = 2, byrow = TRUE)
       rownames(cross_Female) <- c("服用◯", "服用❌")
       colnames(cross_Female) <- c("有害事象◯", "有害事象❌")
       output$crossTableFemale <- renderTable(cross_Female, rownames = TRUE)
       # 全体ークロス表を作成・表示　
-      #cross_All <- matrix(c(sum(reacA %in% drugA), length(drugA) - sum(reacA %in% drugA), length(reacA) - sum(reacA %in% drugA), {sum(demo2$性別 == "男性") + sum(demo2$性別 == "女性")} - length(drugA) - length(reacA) + sum(reacA %in% drugA)), nrow = 2, byrow = TRUE)
       cross_All <- matrix(c(length(intersect(reacA, drugA)), length(drugA) - length(intersect(reacA, drugA)), length(reacA) - length(intersect(reacA, drugA)), {sum(demo2$性別 == "男性") + sum(demo2$性別 == "女性")} - length(drugA) - length(reacA) + length(intersect(reacA, drugA))), nrow = 2, byrow = TRUE)
       rownames(cross_All) <- c("服用◯", "服用❌")
       colnames(cross_All) <- c("有害事象◯", "有害事象❌")
       output$crossTableAll <- renderTable(cross_All, rownames = TRUE)
       
-      
       # 男ーオッズ比を計算・表示
-      odds_ratioMale <- ((cross_Male[1,1]) /(cross_Male[1,2]))/((cross_Male[2,1]) /(cross_Male[2,2]))
-      output$oddsRatioMale <- renderText(paste("オッズ比:", sprintf("%.3f",odds_ratioMale)))
+      OR_Male <- ((cross_Male[1,1]) /(cross_Male[1,2]))/((cross_Male[2,1]) /(cross_Male[2,2]))
+      output$oddsRatioMale <- renderText(paste("オッズ比:", sprintf("%.3f",OR_Male)))
       # 女ーオッズ比を計算・表示
-      odds_ratioFemale <- ((cross_Female[1,1]) /(cross_Female[1,2]))/((cross_Female[2,1]) /(cross_Female[2,2]))
-      output$oddsRatioFemale <- renderText(paste("オッズ比:", sprintf("%.3f",odds_ratioFemale)))
+      OR_Female <- ((cross_Female[1,1]) /(cross_Female[1,2]))/((cross_Female[2,1]) /(cross_Female[2,2]))
+      output$oddsRatioFemale <- renderText(paste("オッズ比:", sprintf("%.3f",OR_Female)))
       # 全体ーオッズ比を計算・表示
-      odds_ratioAll <- ((cross_All[1,1]) /(cross_All[1,2]))/((cross_All[2,1]) /(cross_All[2,2]))
-      output$oddsRatioAll <- renderText(paste("オッズ比:", sprintf("%.3f",odds_ratioAll)))
+      OR_ALL <- ((cross_All[1,1]) /(cross_All[1,2]))/((cross_All[2,1]) /(cross_All[2,2]))
+      output$oddsRatioAll <- renderText(paste("オッズ比:", sprintf("%.3f",OR_ALL)))
       
       #男ー95%信頼区間の計算・表示
-      conf.lowMale  <- exp(log(odds_ratioMale) - (1.96 * sqrt((1/cross_Male[1,1]) + (1/(cross_Male[2,2])) + (1/(cross_Male[1,2])) + (1/cross_Male[2,1]))))
-      conf.highMale <- exp(log(odds_ratioMale) + (1.96 * sqrt((1/cross_Male[1,1]) + (1/(cross_Male[2,2])) + (1/(cross_Male[1,2])) + (1/cross_Male[2,1]))))
-      output$confidenceIntervalMale <- renderText({
-        paste("下限:", sprintf("%.3f",conf.lowMale)," "  , "上限:", sprintf("%.3f",conf.highMale))})
+      CI.Low_Male  <- exp(log(OR_Male) - (1.96 * sqrt((1/cross_Male[1,1]) + (1/(cross_Male[2,2])) + (1/(cross_Male[1,2])) + (1/cross_Male[2,1]))))
+      CI.High_Male <- exp(log(OR_Male) + (1.96 * sqrt((1/cross_Male[1,1]) + (1/(cross_Male[2,2])) + (1/(cross_Male[1,2])) + (1/cross_Male[2,1]))))
+      output$CI_Male <- renderText({paste("下限:", sprintf("%.3f",CI.Low_Male)," "  , "上限:", sprintf("%.3f",CI.High_Male))})
       #女ー95%信頼区間の計算・表示
-      conf.lowFemale  <- exp(log(odds_ratioFemale)  -  (1.96 * sqrt((1/cross_Female[1,1]) + (1/cross_Female[2,2]) + (1/cross_Female[1,2]) + (1/cross_Female[2,1]))))
-      conf.highFemale <- exp(log(odds_ratioFemale)  +  (1.96 * sqrt((1/cross_Female[1,1]) + (1/cross_Female[2,2]) + (1/cross_Female[1,2]) + (1/cross_Female[2,1]))))
-      output$confidenceIntervalFemale <- renderText({
-        paste("下限:", sprintf("%.3f",conf.lowFemale)," " , "上限:", sprintf("%.3f",conf.highFemale))})
+      CI.Low_Female  <- exp(log(OR_Female)  -  (1.96 * sqrt((1/cross_Female[1,1]) + (1/cross_Female[2,2]) + (1/cross_Female[1,2]) + (1/cross_Female[2,1]))))
+      CI.High_Female <- exp(log(OR_Female)  +  (1.96 * sqrt((1/cross_Female[1,1]) + (1/cross_Female[2,2]) + (1/cross_Female[1,2]) + (1/cross_Female[2,1]))))
+      output$CI_Female <- renderText({paste("下限:", sprintf("%.3f",CI.Low_Female)," " , "上限:", sprintf("%.3f",CI.High_Female))})
       #全体ー95%信頼区間の計算・表示
-      conf.lowAll  <- exp(log(odds_ratioAll)  - (1.96 * sqrt((1/cross_All[1,1]) + (1/(cross_All[2,2])) + (1/(cross_All[1,2])) + (1/cross_All[2,1]) )))
-      conf.highAll <- exp(log(odds_ratioAll)  + (1.96 * sqrt((1/cross_All[1,1]) + (1/(cross_All[2,2])) + (1/(cross_All[1,2])) + (1/cross_All[2,1]) )))
-      output$confidenceIntervalAll <- renderText({
-        paste("下限:", sprintf("%.3f",conf.lowAll)," ","上限:", sprintf("%.3f",conf.highAll))})
+      CI.Low_All  <- exp(log(OR_ALL)  - (1.96 * sqrt((1/cross_All[1,1]) + (1/(cross_All[2,2])) + (1/(cross_All[1,2])) + (1/cross_All[2,1]) )))
+      CI.High_All <- exp(log(OR_ALL)  + (1.96 * sqrt((1/cross_All[1,1]) + (1/(cross_All[2,2])) + (1/(cross_All[1,2])) + (1/cross_All[2,1]) )))
+      output$CI_All <- renderText({paste("下限:", sprintf("%.3f",CI.Low_All)," ","上限:", sprintf("%.3f",CI.High_All))})
 
       
-      
-      
       # 選択された薬剤名・有害事象を表示
-      output$selectedDE <- renderText({
-        paste("＜",selected_drug ,"＞", "　✖️　" ,"＜", 
-              if (length(input$reac3) > 0) {
-                selected_events <- paste("＜", input$drug3, "＞", "　✖️　", "＜", paste(input$reac3, collapse = " , "), "＞")
-                return(selected_events)
-              } else {
-                return(NULL)
-              }
-              
-              ,"＞")
-      })
+      if (!is.null(selected_drug) && length(selected_event) > 0) {
+        output$selectedDE <- renderText({
+          paste("＜", selected_drug, "＞", "　✖️　", 
+                "＜", paste(selected_event, collapse = " , "), "＞")
+        })
+      } else {
+        output$selectedDE <- renderText({ NULL })
+      }
       
       
     })
