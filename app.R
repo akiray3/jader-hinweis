@@ -22,8 +22,10 @@ drug3 <- gg3 %>%
   dplyr::group_by(薬剤名) %>%
   dplyr::summarise(件数 = n()) %>%
   dplyr::arrange(-件数) %>% 
-  #dplyr::filter(件数 >= 10) %>%
+  dplyr::filter(件数 >= 10) %>%
   select(-件数) 
+  #dplyr::pull(-件数)
+
 #reac2の作成できた
 reac2 <-  dplyr::distinct(.data = tbl_dtl, 識別番号,有害事象,性別)
 #reac3の作成
@@ -31,7 +33,7 @@ reac3 <- tbl_dtl %>%
   dplyr::group_by(有害事象) %>%
   dplyr::summarise(件数 = n()) %>%
   dplyr::arrange(-件数) %>% 
-  #dplyr::filter(件数 >= 10) %>%
+  dplyr::filter(件数 >= 10) %>%
   dplyr::pull(-件数) %>%
   as.character()
 
@@ -81,8 +83,13 @@ shiny::shinyApp(
             titlePanel("オッズ比計算"),
             sidebarLayout(
               sidebarPanel(
+<<<<<<< HEAD
                 selectizeInput("drug3", "薬剤を選択", choices = unique(drug3$薬剤名), multiple = F, options = list(placeholder = "薬剤名を入力してください")),
                 selectizeInput("reac3", "有害事象を選択", choices = unique(reac3), multiple = T, options = list(placeholder = "有害事象を入力してください")),
+=======
+                selectizeInput("drug3",   "薬剤を選択"  , choices = unique(drug3), multiple = TRUE , options = list(placeholder = "薬剤名を入力してください")),
+                selectizeInput("reac3", "有害事象を選択", choices = unique(reac3), multiple = TRUE , options = list(placeholder = "有害事象を入力してください")),
+>>>>>>> 63c320294e951d5ad2aef62853ffaf6c6c471f9a
                 actionButton("calculate", "計算")
               ),
               mainPanel(
@@ -215,7 +222,7 @@ shiny::shinyApp(
       # 選択された薬剤名・有害事象を表示
       if (!is.null(selected_drug) && length(selected_event) > 0) {
         output$selectedDE <- renderText({
-          paste("＜", selected_drug, "＞", "　✖️　", 
+          paste("＜", paste(selected_drug,  collapse = " , "), "＞", "　✖️　", 
                 "＜", paste(selected_event, collapse = " , "), "＞")
         })
       } else {
