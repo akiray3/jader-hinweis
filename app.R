@@ -81,7 +81,7 @@ shiny::shinyApp(
             titlePanel("オッズ比計算"),
             sidebarLayout(
               sidebarPanel(
-                selectizeInput("drug3", "薬剤を選択", choices = unique(drug3$薬剤名), multiple = FALSE, options = list(placeholder = "薬剤名を入力してください")),
+                selectizeInput("drug3", "薬剤を選択", choices = unique(drug3$薬剤名), multiple = F, options = list(placeholder = "薬剤名を入力してください")),
                 selectizeInput("reac3", "有害事象を選択", choices = unique(reac3), multiple = T, options = list(placeholder = "有害事象を入力してください")),
                 actionButton("calculate", "計算")
               ),
