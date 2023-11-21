@@ -6,12 +6,11 @@ library("DT")
 library("fst")
 library("data.table")
 
-
 figlist <- readRDS("fig_list.obj")
 tbl200 <- fst::read.fst(path = "tbl_200.obj") %>%
   dplyr::arrange(性別, 件数)
 tbl_dtl <- fst::read.fst(path = "tbl_all.obj")
-demo2 <- dplyr::distinct(.data = tbl_dtl, 識別番号,性別)
+demo2 <- dplyr::distinct(.data = tbl_dtl, 識別番号, 性別)
 ##gg2の作成できた
 gg3 <- tbl_dtl %>%
   distinct(識別番号, 一般名) %>%
@@ -23,11 +22,11 @@ drug3 <- gg3 %>%
   dplyr::summarise(件数 = n()) %>%
   dplyr::arrange(-件数) %>% 
   dplyr::filter(件数 >= 10) %>%
-  select(-件数) 
-  #dplyr::pull(-件数)
+  dplyr::select(-件数) %>%
+  dplyr::pull(薬剤名)
 
 #reac2の作成できた
-reac2 <-  dplyr::distinct(.data = tbl_dtl, 識別番号,有害事象,性別)
+reac2 <-  dplyr::distinct(.data = tbl_dtl, 識別番号, 有害事象, 性別)
 #reac3の作成
 reac3 <- tbl_dtl %>%
   dplyr::group_by(有害事象) %>%
@@ -36,9 +35,6 @@ reac3 <- tbl_dtl %>%
   dplyr::filter(件数 >= 10) %>%
   dplyr::pull(-件数) %>%
   as.character()
-
-
-
 
 shiny::shinyApp(
   ui = shinydashboard::dashboardPage(
@@ -83,13 +79,8 @@ shiny::shinyApp(
             titlePanel("オッズ比計算"),
             sidebarLayout(
               sidebarPanel(
-<<<<<<< HEAD
-                selectizeInput("drug3", "薬剤を選択", choices = unique(drug3$薬剤名), multiple = F, options = list(placeholder = "薬剤名を入力してください")),
-                selectizeInput("reac3", "有害事象を選択", choices = unique(reac3), multiple = T, options = list(placeholder = "有害事象を入力してください")),
-=======
                 selectizeInput("drug3",   "薬剤を選択"  , choices = unique(drug3), multiple = TRUE , options = list(placeholder = "薬剤名を入力してください")),
                 selectizeInput("reac3", "有害事象を選択", choices = unique(reac3), multiple = TRUE , options = list(placeholder = "有害事象を入力してください")),
->>>>>>> 63c320294e951d5ad2aef62853ffaf6c6c471f9a
                 actionButton("calculate", "計算")
               ),
               mainPanel(
@@ -146,32 +137,32 @@ shiny::shinyApp(
       thisrow <- input$dt_top200_rows_selected
       tmpdata <- tbl200 %>%
         dplyr::slice(thisrow)
-#      outfig <- figlist[[tmpdata$性別[1]]] +
-#        geom_point(data = tmpdata, color = "#e15f41", shape = 19, alpha = 0.8) +
-#        ggrepel::geom_label_repel(
-#          data = tmpdata, mapping = aes(label = 有害事象), color = "#e15f41",
-#          size = 4, family = "HiraKakuProN-W6", show.legend = FALSE
-#        )
-#      output$plt_map <- renderPlot({plot(outfig)})
-      tbl_sub <- tbl_dtl %>%
-            dplyr::filter(有害事象 == as.character(tmpdata$有害事象[1]))
-      output$dt_detail <- renderDT(server = FALSE,{
-        DT::datatable(
-          data = tbl_sub,
-          filter = "top", rownames = FALSE,
-          selection = "single", extensions = "Buttons",
-          option = list(
-            scrollX = TRUE, responsive = TRUE, autoWidth = TRUE,
-            dom = "Blfrtip", buttons = c("csv", "excel")
-          )
+      outfig <- figlist[[tmpdata$性別[1]]] +
+        geom_point(data = tmpdata, color = "#e15f41", shape = 19, alpha = 0.8) +
+        ggrepel::geom_label_repel(
+          data = tmpdata, mapping = aes(label = 有害事象), color = "#e15f41",
+          size = 4, family = "HiraKakuProN-W6", show.legend = FALSE
         )
-      })
+      output$plt_map <- renderPlot({plot(outfig)})
+        tbl_sub <- tbl_dtl %>%
+          dplyr::filter(有害事象 == as.character(tmpdata$有害事象[1]))
+        output$dt_detail <- renderDT(server = FALSE,{
+          DT::datatable(
+            data = tbl_sub,
+            filter = "top", rownames = FALSE,
+            selection = "single", extensions = "Buttons",
+            option = list(
+              scrollX = TRUE, responsive = TRUE, autoWidth = TRUE,
+              dom = "Blfrtip", buttons = c("csv", "excel")
+            )
+          )
+        })
     })
     observeEvent(input$calculate, {
       selected_drug <- input$drug3
       selected_event <- input$reac3
-      #selected_drug <- "プレドニゾロン"
-      #selected_event <- c("薬物相互作用","増強的薬物相互作用")
+      # selected_drug <- "プレドニゾロン"
+      # selected_event <- c("薬物相互作用","増強的薬物相互作用")
       drugM <- gg3$識別番号[which(gg3$薬剤名 == selected_drug & gg3$性別 == "男性")]
       drugF <- gg3$識別番号[which(gg3$薬剤名 == selected_drug & gg3$性別 == "女性")]
       drugA <- union(drugM ,drugF)
@@ -205,32 +196,28 @@ shiny::shinyApp(
       OR_ALL <- ((cross_All[1,1]) /(cross_All[1,2]))/((cross_All[2,1]) /(cross_All[2,2]))
       output$oddsRatioAll <- renderText(paste("オッズ比:", sprintf("%.3f",OR_ALL)))
       
-      #男ー95%信頼区間の計算・表示
+      # 男ー95%信頼区間の計算・表示
       CI.Low_Male  <- exp(log(OR_Male) - (1.96 * sqrt((1/cross_Male[1,1]) + (1/(cross_Male[2,2])) + (1/(cross_Male[1,2])) + (1/cross_Male[2,1]))))
       CI.High_Male <- exp(log(OR_Male) + (1.96 * sqrt((1/cross_Male[1,1]) + (1/(cross_Male[2,2])) + (1/(cross_Male[1,2])) + (1/cross_Male[2,1]))))
       output$CI_Male <- renderText({paste("下限:", sprintf("%.3f",CI.Low_Male)," "  , "上限:", sprintf("%.3f",CI.High_Male))})
-      #女ー95%信頼区間の計算・表示
+      # 女ー95%信頼区間の計算・表示
       CI.Low_Female  <- exp(log(OR_Female)  -  (1.96 * sqrt((1/cross_Female[1,1]) + (1/cross_Female[2,2]) + (1/cross_Female[1,2]) + (1/cross_Female[2,1]))))
       CI.High_Female <- exp(log(OR_Female)  +  (1.96 * sqrt((1/cross_Female[1,1]) + (1/cross_Female[2,2]) + (1/cross_Female[1,2]) + (1/cross_Female[2,1]))))
       output$CI_Female <- renderText({paste("下限:", sprintf("%.3f",CI.Low_Female)," " , "上限:", sprintf("%.3f",CI.High_Female))})
-      #全体ー95%信頼区間の計算・表示
+      # 全体ー95%信頼区間の計算・表示
       CI.Low_All  <- exp(log(OR_ALL)  - (1.96 * sqrt((1/cross_All[1,1]) + (1/(cross_All[2,2])) + (1/(cross_All[1,2])) + (1/cross_All[2,1]) )))
       CI.High_All <- exp(log(OR_ALL)  + (1.96 * sqrt((1/cross_All[1,1]) + (1/(cross_All[2,2])) + (1/(cross_All[1,2])) + (1/cross_All[2,1]) )))
       output$CI_All <- renderText({paste("下限:", sprintf("%.3f",CI.Low_All)," ","上限:", sprintf("%.3f",CI.High_All))})
 
-      
       # 選択された薬剤名・有害事象を表示
       if (!is.null(selected_drug) && length(selected_event) > 0) {
         output$selectedDE <- renderText({
-          paste("＜", paste(selected_drug,  collapse = " , "), "＞", "　✖️　", 
+          paste("＜", paste(selected_drug,  collapse = " , "), "＞", "　✖️　",
                 "＜", paste(selected_event, collapse = " , "), "＞")
         })
       } else {
         output$selectedDE <- renderText({ NULL })
       }
-      
-      
     })
-    
   }
 )
